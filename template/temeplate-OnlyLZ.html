@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="zh">
+
+<head>
+    <title>{{.Title}}</title>
+    <meta charset="UTF-8">
+    <script>
+        function toggleLzl(thread_id) {
+            var x = document.getElementById('lzl' + thread_id);
+            if (x.style.display === 'none') {
+                x.style.display = 'block';
+            } else {
+                x.style.display = 'none';
+            }
+        }
+    </script>
+    <style>
+        .lzl {
+            border-style: solid;
+            border-width: thin;
+            border-color: #000000;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>{{.Title}}</h1>
+    <div><a href="{{.Url}}">{{.Url}}</a></div>
+    <div>只看用户 <select id='select'>
+            <option value="all">All</option>
+        </select></div>
+    <hr />
+    {{range .Comments}}
+    <div class="post" data-user="{{.UserName}}">
+        <div>
+            <div>{{.Time}} #{{.PostNO}}: <span class="user"><b>{{.UserName}}</b></span></div>
+            <div>{{.Content}}</div>
+        </div>
+        {{if index $.Lzls .PostID}}
+        <button onclick="toggleLzl({{ .PostID }})">收起回复</button>
+        <div id="lzl{{.PostID}}" class="lzl">
+            {{$lzl := index $.Lzls .PostID }}
+            {{range $lzl.Info}}
+            <div>{{.Time}} <b>{{.UserName}}</b>: {{.Content}}</div>
+            {{end}}
+        </div>
+        {{end}}
+        <hr />
+    </div>
+    {{end}}
+    <script>
+        function substitueRawImageSrc() {
+            let imgs = document.getElementsByTagName('img');
+            for (let img of imgs) {
+                let src = new URL(img.getAttribute('src'));
+                // http://tiebapic.baidu.com/forum/w%3D580/sign=fa9bff75584a20a4311e3ccfa0539847/2ca3b6096b63f624d2ed9e649044ebf81b4ca366.jpg
+                if (src.hostname !== 'tiebapic.baidu.com') {
+                    continue;
+                }
+                let imageName = src.pathname.substring(src.pathname.lastIndexOf('/') + 1);
+                img.onerror = () => {
+                    console.log(`image loading failed: ${imageName}`);
+                };
+                // console.log(imageName);
+                src.pathname = '/forum/pic/item/' + imageName;
+                img.setAttribute('src', src.toString());
+
+            }
+        }
+
+        function updateSelect(e) {
+            console.log(e.srcElement.value);
+            const lzname = e.srcElement.value;
+            let posts = document.getElementsByClassName("post");
+            for (let p of posts) {
+                p.style.display = 'none';
+                if (p.dataset.user === lzname || lzname === 'all') {
+                    p.style.display = "block";
+                }
+            }
+        }
+
+        var temp = [];
+
+        function addSelect() {
+            let users = document.getElementsByClassName('user');
+            let select = document.getElementById('select');
+            select.addEventListener('input', updateSelect);
+
+            for (let user of users) {
+                temp.push(user.innerText);
+            }
+            const usernames = Array.from(new Set(temp));
+            for (let u of usernames) {
+                select.add(new Option(u, u))
+            }
+        }
+
+        addSelect()
+        substitueRawImageSrc();
+    </script>
+</body>
+
+</html>
